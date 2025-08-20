@@ -1,0 +1,86 @@
+
+<!doctype html>
+<html lang="hr">
+<head>
+  <meta charset="utf-8">
+  <title>Futsal Statistika</title>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <style>
+    body { font-family: Arial, sans-serif; margin: 20px; }
+    table { border-collapse: collapse; width: 60%; margin-bottom: 20px; }
+    th, td { border: 1px solid #333; padding: 8px; text-align: center; }
+    th { background-color: #f0f0f0; }
+    h1, h2 { color: #222; }
+    form { margin-top: 20px; }
+    input, select, button { padding: 5px; margin: 5px; }
+    button { cursor: pointer; }
+    .charts { display: flex; gap: 40px; margin-top: 40px; }
+    canvas { background: #fafafa; padding: 10px; border-radius: 10px; }
+  </style>
+</head>
+<body>
+  <h1>📊 Statistika igrača</h1>
+  <table>
+    <tr>
+      <th>Ime</th><th>Golovi</th><th>Asistencije</th><th>Prisustvo</th>
+    </tr>
+    {% for p in players %}
+    <tr>
+      <td>{{ p.name }}</td>
+      <td>{{ p.goals }}</td>
+      <td>{{ p.assists }}</td>
+      <td>{{ "✅" if p.presence == "yes" else "❌" }}</td>
+    </tr>
+    {% endfor %}
+  </table>
+
+  <h2>➕ Dodaj / Ažuriraj statistiku</h2>
+  <form action="/add" method="post">
+    Ime: <input type="text" name="name" required>
+    Golovi: <input type="number" name="goals" value="0" min="0">
+    Asistencije: <input type="number" name="assists" value="0" min="0">
+    Prisustvo:
+    <select name="presence">
+      <option value="yes">Da</option>
+      <option value="no">Ne</option>
+    </select>
+    <button type="submit">Spremi</button>
+  </form>
+
+  <div class="charts">
+    <canvas id="statsChart" width="400" height="300"></canvas>
+    <canvas id="presenceChart" width="400" height="300"></canvas>
+  </div>
+
+  <script>
+    const players = {{ players | tojson }};
+    const labels = players.map(p => p.name);
+    const goals = players.map(p => p.goals);
+    const assists = players.map(p => p.assists);
+
+    new Chart(document.getElementById('statsChart'), {
+      type: 'bar',
+      data: {
+        labels: labels,
+        datasets: [
+          { label: 'Golovi', data: goals, backgroundColor: 'rgba(255, 99, 132, 0.6)' },
+          { label: 'Asistencije', data: assists, backgroundColor: 'rgba(54, 162, 235, 0.6)' }
+        ]
+      },
+      options: { responsive: true, plugins: { legend: { position: 'top' } }, scales: { y: { beginAtZero: true } } }
+    });
+
+    const presenceYes = players.filter(p => p.presence === "yes").length;
+    const presenceNo = players.filter(p => p.presence === "no").length;
+
+    new Chart(document.getElementById('presenceChart'), {
+      type: 'pie',
+      data: {
+        labels: ['Prisutan', 'Odsutan'],
+        datasets: [{ data: [presenceYes, presenceNo], backgroundColor: ['rgba(75, 192, 75, 0.6)', 'rgba(200, 200, 200, 0.6)'] }]
+      },
+      options: { responsive: true, plugins: { legend: { position: 'bottom' } } }
+    });
+  </script>
+</body>
+</html>
